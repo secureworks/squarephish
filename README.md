@@ -1,1 +1,1 @@
-# squarephish
+# SquarePhish
