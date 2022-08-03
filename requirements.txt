@@ -1,0 +1,5 @@
+flask
+pyOpenSSL
+pypng
+pyqrcode
+requests
