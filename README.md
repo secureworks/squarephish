@@ -36,7 +36,7 @@ modules:
 
 ## Attack Steps
 
-An attacker can use the `email` module of SquarePhish to send a malicious QR code email to a victim. The default pretext is that the victim is required to update their iPhone's O365 authentication to continue using mobile email. The current client ID in use is the iOS Apple Client ID.
+An attacker can use the `email` module of SquarePhish to send a malicious QR code email to a victim. The default pretext is that the victim is required to update their Microsoft MFA authentication to continue using mobile email. The current client ID in use is the Microsoft Authenticator App.
 
 > By sending a QR code first, the attacker can avoid prematurely starting the OAuth Device Code flow that lasts only 15 minutes.
 
