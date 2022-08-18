@@ -13,11 +13,11 @@
 # limitations under the License.
 
 import io
-import base64
 import logging
 import pyqrcode  # type: ignore
 from configparser import ConfigParser
 from email.message import EmailMessage
+from email.mime.image import MIMEImage
 from squarephish.modules.emailer import Emailer
 
 
@@ -30,21 +30,30 @@ class QRCodeEmail:
         port: int,
         endpoint: str,
         email: str,
-    ) -> str:
+    ) -> bytes:
         """Generate a QR code for a given URL
 
         :param server:   malicious server domain/IP
         :param port:     port malicious server is running on
         :param endpoint: malicious server endpoint to request
-        :param to_email: TO email address of victim
+        :param email:    TO email address of victim
+        :returns:        QR code raw bytes
         """
-        endpoint = endpoint.strip("/")
-        url = f"https://{server}:{port}/{endpoint}?email={email}"
-        c = pyqrcode.create(url)
-        s = io.BytesIO()
-        c.png(s, scale=6)
-        encoded = base64.b64encode(s.getvalue()).decode("ascii")
-        return encoded
+        try:
+            endpoint = endpoint.strip("/")
+            url = f"https://{server}:{port}/{endpoint}?email={email}"
+            qrcode = pyqrcode.create(url)
+
+            # Get the QR code as raw bytes and store as BytesIO object
+            qrcode_bytes = io.BytesIO()
+            qrcode.png(qrcode_bytes, scale=6)
+
+            # Return the QR code bytes
+            return qrcode_bytes.getvalue()
+
+        except Exception as e:
+            logging.error(f"Error generating QR code: {e}")
+            return None
 
     @classmethod
     def send_qrcode(
@@ -78,5 +87,16 @@ class QRCodeEmail:
         msg["Subject"] = config.get("EMAIL", "SUBJECT")
 
         email_template = config.get("EMAIL", "EMAIL_TEMPLATE")
-        msg.set_content(email_template % qrcode, subtype="html")
+        msg.set_content(email_template, subtype="html")
+        msg.add_alternative(email_template, subtype="html")
+
+        # Create a new MIME image to embed into the email as inline
+        logo = MIMEImage(qrcode)
+        logo.add_header("Content-ID", f"<qrcode.png>")  # <img src"cid:qrcode.png">
+        logo.add_header("X-Attachment-Id", "qrcode.png")
+        logo["Content-Disposition"] = f"inline; filename=qrcode.png"
+
+        msg.get_payload()[1].make_mixed()
+        msg.get_payload()[1].attach(logo)
+
         return emailer.send_email(msg)

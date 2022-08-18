@@ -147,9 +147,11 @@ def parse_config(config_file: str, module: str) -> CustomConfigParser:
     # Validate the required data exists in the configuration file
     try:
         for val in utils.CONFIG_DEFAULT:
-            if not config.get("DEFAULT", val):
-                logging.error(f"Missing value for option '{val.lower()}' in section: 'DEFAULT'")  # fmt: skip
-                sys.exit(1)
+            # Ignore values that can be left blank
+            if val not in ["SMTP_EMAIL", "SMTP_PASSWORD", "SMTP_PROTO"]:
+                if not config.get("DEFAULT", val):
+                    logging.error(f"Missing value for option '{val.lower()}' in section: 'DEFAULT'")  # fmt: skip
+                    sys.exit(1)
 
         if module == "email":
             for val in utils.CONFIG_EMAIL:

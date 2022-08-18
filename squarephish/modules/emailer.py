@@ -28,6 +28,7 @@ class Emailer:
         """
         self.smtp_server = config.get("DEFAULT", "SMTP_SERVER")
         self.smtp_port = config.get("DEFAULT", "SMTP_PORT")
+        self.smtp_proto = config.get("DEFAULT", "SMTP_PROTO")
         self.smtp_email = config.get("DEFAULT", "SMTP_EMAIL")
         self.smtp_password = config.get("DEFAULT", "SMTP_PASSWORD")
 
@@ -37,10 +38,39 @@ class Emailer:
         :param message: email message object to send
         :returns:       bool if email sent successfully
         """
+        # Notify the user of no credentials
+        if not (self.smtp_email or self.smtp_password):
+            logging.debug("No credentials provided, skipping SMTP authentication")
+
+        # Attempt to send the email over SSL, TLS, or no encryption via SMTP
         try:
-            with smtplib.SMTP_SSL(self.smtp_server, self.smtp_port) as smtp:
-                smtp.login(self.smtp_email, self.smtp_password)
-                smtp.send_message(message)
+            if self.smtp_proto.lower() == "ssl":
+                with smtplib.SMTP_SSL(self.smtp_server, self.smtp_port) as smtp:
+                    if self.smtp_email or self.smtp_password:
+                        smtp.login(self.smtp_email, self.smtp_password)
+
+                    smtp.send_message(message)
+
+            elif self.smtp_proto.lower() == "tls":
+                with smtplib.SMTP(self.smtp_server, self.smtp_port) as smtp:
+                    smtp.ehlo()
+                    smtp.starttls()
+
+                    if self.smtp_email or self.smtp_password:
+                        smtp.login(self.smtp_email, self.smtp_password)
+
+                    smtp.send_message(message)
+
+            elif not self.smtp_proto:
+                with smtplib.SMTP(self.smtp_server, self.smtp_port) as smtp:
+                    if self.smtp_email or self.smtp_password:
+                        smtp.login(self.smtp_email, self.smtp_password)
+
+                    smtp.send_message(message)
+
+            # Catch invalid protocols
+            else:
+                raise ValueError(f"Invalid SMTP protocol: {self.smtp_proto}")
 
             return True
 
