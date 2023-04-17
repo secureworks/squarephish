@@ -83,6 +83,18 @@ def parse_args() -> argparse.Namespace:
         help="victim email address to send initial QR code email to",
     )
 
+    email_parser.add_argument(
+        "-u",
+        "--url",
+        type=str,
+        default=None,
+        help=(
+        "force a url to use, this will override the default "
+        "and will not work with default device flow or pretext but "
+        "can be useful if using squarephish to send lures directing targets to other servers"
+        ),
+    )
+
     # Create 'server' parser
     server_parser = subparsers.add_parser(
         "server",
@@ -224,6 +236,7 @@ if __name__ == "__main__":
     if args.module == "email":
         emailed = QRCodeEmail.send_qrcode(
             email=args.email,
+            url=args.url,
             config=config,
             emailer=emailer,
         )

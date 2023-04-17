@@ -30,6 +30,7 @@ class QRCodeEmail:
         port: int,
         endpoint: str,
         email: str,
+        url: str,
     ) -> bytes:
         """Generate a QR code for a given URL
 
@@ -37,11 +38,13 @@ class QRCodeEmail:
         :param port:     port malicious server is running on
         :param endpoint: malicious server endpoint to request
         :param email:    TO email address of victim
+        :param url:      URL if over riding default
         :returns:        QR code raw bytes
         """
         try:
             endpoint = endpoint.strip("/")
-            url = f"https://{server}:{port}/{endpoint}?email={email}"
+            if url is None:
+                url = f"https://{server}:{port}/{endpoint}?email={email}"
             qrcode = pyqrcode.create(url)
 
             # Get the QR code as raw bytes and store as BytesIO object
@@ -61,6 +64,7 @@ class QRCodeEmail:
         email: str,
         config: ConfigParser,
         emailer: Emailer,
+        url: str
     ) -> bool:
         """Send initial QR code to victim pointing to our malicious URL
 
@@ -75,6 +79,7 @@ class QRCodeEmail:
             config.get("EMAIL", "SQUAREPHISH_PORT"),
             config.get("EMAIL", "SQUAREPHISH_ENDPOINT"),
             email,
+            url,
         )
 
         if not qrcode:
