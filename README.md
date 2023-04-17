@@ -103,6 +103,7 @@ optional arguments:
 
   -e EMAIL, --email EMAIL
                         victim email address to send initial QR code email to
+
   -u URL, --url URL     force a url to use, this will override the default
                         and will not work with default device flow or
                         pretext but can be useful if using squarephish to
